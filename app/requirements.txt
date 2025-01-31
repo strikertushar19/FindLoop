@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+pymupdf  # For extracting text from PDFs
+openai
+python-dotenv  # For loading environment variables
