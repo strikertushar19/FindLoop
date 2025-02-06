@@ -14,8 +14,7 @@ load_dotenv()
 API_KEY = os.getenv("API")
 CX =os.getenv("CX")
 
-CACHE_DIR = os.getenv("CACHE_DIR")
-os.makedirs(CACHE_DIR, exist_ok=True)
+
 # def get_pdf_links(query):
     
 #         url = f"https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={CX}&q={query}"
