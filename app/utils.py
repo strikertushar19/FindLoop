@@ -6,15 +6,25 @@ from dotenv import load_dotenv
 import hashlib
 import urllib.parse
 
+import json
 # Load environment variables from .env file
 load_dotenv()
 
 # Get API Key from .env
-API_KEY = os.getenv("GOOGLE_API_KEY")
-CX =os.getenv("GOOGLE_SEARCH_ID")
+API_KEY = os.getenv("API")
+CX =os.getenv("CX")
 
 CACHE_DIR = os.getenv("CACHE_DIR")
 os.makedirs(CACHE_DIR, exist_ok=True)
+# def get_pdf_links(query):
+    
+#         url = f"https://www.googleapis.com/customsearch/v1?key={API_KEY}&cx={CX}&q={query}"
+#         response = requests.get(url)
+#         response.raise_for_status()
+#         print(response)
+#         return  response.json()
+
+
 
 def get_cache_filename(key):
     """Generate a cache filename based on the hash of the key."""
@@ -35,36 +45,27 @@ def save_cache(key, data):
         pickle.dump(data, f)
 
 def get_pdf_links(query, num_pages=1):
-    """Fetch PDF links using Google Custom Search API with caching and pagination."""
-    cached_result = load_cache(query)
-    if cached_result:
-        print("🔄 Using cached results for:", query)
-        return cached_result
-
+    """Fetch PDF links using Google Custom Search API."""
     search_url = "https://www.googleapis.com/customsearch/v1"
     pdf_links = []
     start = 1  # Start from the first result
 
     for page in range(num_pages):
         params = {
-            "q": query + " filetype:pdf",  # Search only PDFs
+            "q": query,  # Just the query, without "filetype:pdf"
             "key": API_KEY,
             "cx": CX,  # Google Custom Search Engine ID
             "num": 10,  # Max 10 results per page
             "start": start  # Pagination start value
         }
 
-        print(f"🔍 Searching PDFs for: {query} (Page {page + 1})")
         response = requests.get(search_url, params=params)
-        print(f"📝 Response Status Code: {response.status_code}")
 
         if response.status_code != 200:
-            print("⚠️ Error: Failed to fetch search results!")
-            print("Response:", response.text)
-            break
+            return {"error": "Failed to fetch search results", "status_code": response.status_code, "details": response.text}
 
         data = response.json()
-        pdf_links += [item["link"] for item in data.get("items", []) if item["link"].endswith(".pdf")]
+        pdf_links.extend([item["link"] for item in data.get("items", []) if item["link"].endswith(".pdf")])
 
         # If fewer than 10 results are returned, stop pagination
         if len(data.get("items", [])) < 10:
@@ -72,14 +73,7 @@ def get_pdf_links(query, num_pages=1):
 
         start += 10  # Move to the next set of results
 
-    print("📜 PDF LINKS FOUND:")
-    for pdf in pdf_links:
-        print(pdf)
-
-    # Cache the result
-    save_cache(query, pdf_links)
-
-    return pdf_links
+    return pdf_links if pdf_links else {"error": "No PDFs found"}
 
 
 def sanitize_filename(url):
@@ -151,14 +145,3 @@ def extract_text_from_pdfs(pdf_dir="pdfs"):
     save_cache("pdf_text", text_data)
 
     return text_data
-
-# # Example Usage
-# query = "recurrence relation of heap sort"
-# pdf_links = get_pdf_links(query)
-
-# if pdf_links:
-#     download_pdfs(pdf_links)
-#     extracted_text = extract_text_from_pdfs()
-#     print("📜 Extracted Content Preview:\n", extracted_text[:500])  # Show first 500 chars
-# else:
-#     print("⚠️ No PDF links found!")
