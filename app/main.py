@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
 from utils import get_pdf_links, download_pdfs, extract_text_from_pdfs
-from summarizer import summarize_text
 from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(
